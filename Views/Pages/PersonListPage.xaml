@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Memofy.Views.Components"
+             x:Class="Memofy.Views.Pages.PersonListPage"
+             Title="Személyek"
+             BackgroundColor="#23ADA3"
+             Shell.BackgroundColor="#23ADA3"
+             Shell.TitleColor="Wheat"
+             Shell.ForegroundColor="Wheat">
+    <Border StrokeThickness="0"
+            BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#141414}"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill"
+            StrokeShape="RoundRectangle 25,25,0,0"
+            Padding="5"
+            Margin="0,5,0,0">
+        <AbsoluteLayout>
+            <CollectionView 
+                AbsoluteLayout.LayoutBounds="0,0,1,.9"
+                AbsoluteLayout.LayoutFlags="All">
+                <CollectionView.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Teszt Elek</x:String>
+                        <x:String>Vicc Elek</x:String>
+                        <x:String>Gipsz Jakab</x:String>
+                        <x:String>Aloe Vera</x:String>
+                        <x:String>Front Endre</x:String>
+                        <x:String>Vicc Vilmos</x:String>
+                        <x:String>Kiss Károly</x:String>
+                        <x:String>Petőfi Sándor</x:String>
+                        <x:String>Arany János</x:String>
+                        <x:String>Adi Endre</x:String>
+                        <x:String>Móricz Zsigmond</x:String>
+                        <x:String>Tél Tamara</x:String>
+                        <x:String>Debreceni Dénes</x:String>
+                        <x:String>Jedlik Ányos</x:String>
+                    </x:Array>
+                </CollectionView.ItemsSource>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <SwipeView>
+                            <SwipeView.RightItems>
+                                <SwipeItem Text="Törlés" BackgroundColor="Red"/>
+                            </SwipeView.RightItems>
+                            <SwipeView.LeftItems>
+                                <SwipeItem Text="Módosítás" BackgroundColor="#23ABA3"/>
+                            </SwipeView.LeftItems>
+                            <Frame Margin="10,5,10,0">
+                                <Grid>
+                                    <Label Text="{Binding .}"
+                                           FontAttributes="Bold"
+                                           VerticalTextAlignment="Center"
+                                           HorizontalTextAlignment="Center"/>
+                                </Grid>
+                            </Frame>
+                        </SwipeView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- A felcsúszó View -->
+            <local:CreatePersonView x:Name="CreatePerson"
+                       AbsoluteLayout.LayoutBounds="0,0,1,1"
+                       AbsoluteLayout.LayoutFlags="All"/>
+
+            <Button
+                Text="+"
+                FontSize="24"
+                WidthRequest="60"
+                HeightRequest="60"
+                BackgroundColor="#23ABA3"
+                TextColor="White"
+                CornerRadius="30"
+                AbsoluteLayout.LayoutBounds=".95,.98,60,60"
+                AbsoluteLayout.LayoutFlags="PositionProportional"
+                Clicked="OnFabClicked"/>
+        </AbsoluteLayout>
+    </Border>
+</ContentPage>
