@@ -14,9 +14,11 @@ namespace Memofy
             // Állapotsor színének beállítása
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop)
             {
-                //Window.SetStatusBarColor(Android.Graphics.Color.ParseColor("#00B1B1"));
                 Window?.SetStatusBarColor(Android.Graphics.Color.ParseColor("#23ABA3"));
+                Window?.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#23ABA3"));
             }
+
+            RequestedOrientation = ScreenOrientation.Portrait;
         }
     }
 }
