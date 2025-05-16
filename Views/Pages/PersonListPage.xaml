@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:Memofy.Views.Components"
+             xmlns:viewmodel="clr-namespace:Memofy.ViewModels"
+             x:DataType="viewmodel:PersonListViewModel"
              x:Class="Memofy.Views.Pages.PersonListPage"
              Title="Személyek"
              BackgroundColor="#23ADA3"
@@ -16,53 +17,63 @@
             Padding="5"
             Margin="0,5,0,0">
         <AbsoluteLayout>
-            <CollectionView 
+            <CollectionView
+                x:Name="PersonCollection"
+                ItemsSource="{Binding Persons}"
                 AbsoluteLayout.LayoutBounds="0,0,1,.9"
                 AbsoluteLayout.LayoutFlags="All">
-                <CollectionView.ItemsSource>
-                    <x:Array Type="{x:Type x:String}">
-                        <x:String>Teszt Elek</x:String>
-                        <x:String>Vicc Elek</x:String>
-                        <x:String>Gipsz Jakab</x:String>
-                        <x:String>Aloe Vera</x:String>
-                        <x:String>Front Endre</x:String>
-                        <x:String>Vicc Vilmos</x:String>
-                        <x:String>Kiss Károly</x:String>
-                        <x:String>Petőfi Sándor</x:String>
-                        <x:String>Arany János</x:String>
-                        <x:String>Adi Endre</x:String>
-                        <x:String>Móricz Zsigmond</x:String>
-                        <x:String>Tél Tamara</x:String>
-                        <x:String>Debreceni Dénes</x:String>
-                        <x:String>Jedlik Ányos</x:String>
-                    </x:Array>
-                </CollectionView.ItemsSource>
+                <CollectionView.EmptyView>
+                    <Label Text="Nincs elérhető adat"
+                           TextColor="Gray"
+                           FontAttributes="Italic"
+                           FontSize="16"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center"
+                           Margin="20"/>
+                </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="viewmodel:PersonDto">
                         <SwipeView>
                             <SwipeView.RightItems>
-                                <SwipeItem Text="Törlés" BackgroundColor="Red"/>
+                                <SwipeItem Text="Törlés"
+                                           BackgroundColor="Red"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}"
+                                           CommandParameter="{Binding Id}"/>
                             </SwipeView.RightItems>
                             <SwipeView.LeftItems>
-                                <SwipeItem Text="Módosítás" BackgroundColor="#23ABA3"/>
+                                <!-- TODO -->
+                                <SwipeItem Text="Módosítás" BackgroundColor="#23ABA3" IsVisible="False"/>
                             </SwipeView.LeftItems>
                             <Frame Margin="10,5,10,0">
-                                <Grid>
-                                    <Label Text="{Binding .}"
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*">
+                                    <Label Text="{Binding Name}"
                                            FontAttributes="Bold"
                                            VerticalTextAlignment="Center"
-                                           HorizontalTextAlignment="Center"/>
+                                           HorizontalTextAlignment="Center"
+                                           Grid.Column="1"
+                                           Grid.Row="0"
+                                           Grid.RowSpan="2"/>
+                                    <Label Text="Születésnap"
+                                           HorizontalTextAlignment="Start"
+                                           TextColor="Grey"/>
+                                    <Label Text="{Binding Birthday}"
+                                           HorizontalTextAlignment="Start"
+                                           Grid.Row="1"/>
+                                    <Label Text="Névnap"
+                                           HorizontalTextAlignment="End"
+                                           TextColor="Grey"
+                                           Grid.Column="2"/>
+                                    <Label Text="{Binding Nameday}"
+                                           VerticalTextAlignment="End"
+                                           HorizontalTextAlignment="End"
+                                           Grid.Column="2"
+                                           Grid.Row="1"/>
                                 </Grid>
                             </Frame>
                         </SwipeView>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-
-            <!-- A felcsúszó View -->
-            <local:CreatePersonView x:Name="CreatePerson"
-                       AbsoluteLayout.LayoutBounds="0,0,1,1"
-                       AbsoluteLayout.LayoutFlags="All"/>
 
             <Button
                 Text="+"
@@ -75,6 +86,14 @@
                 AbsoluteLayout.LayoutBounds=".95,.98,60,60"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
                 Clicked="OnFabClicked"/>
+
+            <ActivityIndicator
+                IsRunning="{Binding IsBusy}" 
+                IsVisible="{Binding IsBusy}" 
+                Color="#23ADA3"
+                AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1"
+                AbsoluteLayout.LayoutFlags="PositionProportional" />
+
         </AbsoluteLayout>
     </Border>
 </ContentPage>

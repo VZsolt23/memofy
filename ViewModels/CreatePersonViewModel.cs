@@ -1,98 +1,57 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Memofy.Dtos;
+using Memofy.Models;
+using Memofy.Services;
+using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Memofy.ViewModels
 {
-    public class CreatePersonViewModel : INotifyPropertyChanged
+    public partial class CreatePersonViewModel : ObservableValidator
     {
-        public ObservableCollection<MonthOption> Months { get; set; }
-        public ObservableCollection<int> BirthDays { get; set; }
-        public ObservableCollection<int> NameDays { get; set; }
+        #region Form helper properties
 
-        #region Birthday props
+        [ObservableProperty]
+        private ObservableCollection<MonthOptionDto> monthsOfTheYear;
 
-        private MonthOption _birthMonth;
-        public MonthOption BirthMonth
-        {
-            get => _birthMonth;
-            set
-            {
-                if (_birthMonth != value)
-                {
-                    _birthMonth = value;
-                    OnPropertyChanged();
-                    UpdateBirthDays(value.Number);
-                }
-            }
-        }
+        [ObservableProperty]
+        private ObservableCollection<int> daysForBirthday;
 
-        private int _birthDay;
-        public int BirthDay
-        {
-            get => _birthDay;
-            set
-            {
-                if (_birthDay != value)
-                {
-                    _birthDay = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private ObservableCollection<int> daysForNameday;
 
         #endregion
 
-        #region Nameday props
+        #region Person properties
 
-        private MonthOption _namedayMonth { get; set; }
-        public MonthOption NamedayMonth
-        {
-            get => _namedayMonth;
-            set
-            {
-                if (_namedayMonth != value)
-                {
-                    _namedayMonth = value;
-                    OnPropertyChanged();
-                    UpdateNameDays(value.Number);
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyDataErrorInfo]
+        [Required(ErrorMessage = "A név megadása kötelező!")]
+        private string personName;
 
-        private int _namedayDay { get; set; }
-        public int NamedayDay
-        {
-            get => _namedayDay;
-            set
-            {
-                if (_namedayDay != value)
-                {
-                    _namedayDay = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyDataErrorInfo]
+        [Required(ErrorMessage = "A hónap megadása kötelező!")]
+        private MonthOptionDto? birthMonth;
 
-        private bool _isNamedayEnabled;
-        public bool IsNamedayEnabled
-        {
-            get => _isNamedayEnabled;
-            set
-            {
-                if (_isNamedayEnabled != value)
-                {
-                    _isNamedayEnabled = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyDataErrorInfo]
+        [Required(ErrorMessage = "A nap megadása kötelező!")]
+        private int? birthDay;
+
+        [ObservableProperty]
+        private MonthOptionDto? nameMonth;
+
+        [ObservableProperty]
+        private int? nameDay;
 
         #endregion
 
         public CreatePersonViewModel()
         {
-            Months =
+            personName = string.Empty;
+
+            monthsOfTheYear =
             [
                 new() { Number = 1, Name = "Január" },
                 new() { Number = 2, Name = "Február" },
@@ -108,9 +67,70 @@ namespace Memofy.ViewModels
                 new() { Number = 12, Name = "December" }
             ];
 
-            BirthDays = [.. Enumerable.Range(1, 31)];
-            NameDays = [.. Enumerable.Range(1, 31)];
+            daysForBirthday = [.. Enumerable.Range(1, 31)];
+            daysForNameday = [.. Enumerable.Range(1, 31)];
         }
+
+        public async Task<bool> SavePersonAsync()
+        {
+            ValidateAllProperties();
+
+            if (HasErrors)
+            {
+                OnPropertyChanged(nameof(NameError));
+                OnPropertyChanged(nameof(BirthMonth));
+                OnPropertyChanged(nameof(BirthDay));
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(PersonName) || BirthMonth == null || DaysForBirthday == null)
+                return false;
+
+            var person = new Person
+            {
+                Name = PersonName,
+                Birthday = new DateOnly(DateOnly.MinValue.Year, BirthMonth.Number, (int)BirthDay),
+                Nameday = NameMonth != null && NameDay != null
+                    ? new DateOnly(DateOnly.MinValue.Year, NameMonth.Number, NameDay.Value)
+                    : null
+            };
+
+            await DatabaseService.Instance.InitAsync();
+            await DatabaseService.Instance.AddPersonAsync(person);
+
+            return true;
+        }
+
+        partial void OnPersonNameChanged(string value)
+        {
+            ValidateProperty(value, nameof(PersonName));
+            OnPropertyChanged(nameof(NameError));
+        }
+
+        partial void OnBirthMonthChanged(MonthOptionDto? value)
+        {
+            if (value is not null)
+                UpdateBirthDays(value.Number);
+
+            ValidateProperty(value, nameof(BirthMonth));
+            OnPropertyChanged(nameof(BirthMonth));
+        }
+
+        partial void OnBirthDayChanged(int? value)
+        {
+            ValidateProperty(value, nameof(BirthDay));
+            OnPropertyChanged(nameof(BirthDay));
+        }
+
+        partial void OnNameMonthChanged(MonthOptionDto? value)
+        {
+            if (value is not null)
+                UpdateNameDays(value.Number);
+        }
+
+        public string? NameError => GetErrors(nameof(PersonName))?.FirstOrDefault()?.ErrorMessage;
+        public string? BirthMonthError => GetErrors(nameof(BirthMonth))?.FirstOrDefault()?.ErrorMessage;
+        public string? BirthDayError => GetErrors(nameof(BirthDay))?.FirstOrDefault()?.ErrorMessage;
 
         private void UpdateDays(Func<ObservableCollection<int>> getter, Action<ObservableCollection<int>> setter, string propertyName, int month)
         {
@@ -122,22 +142,12 @@ namespace Memofy.ViewModels
 
         private void UpdateBirthDays(int month)
         {
-            UpdateDays(() => BirthDays, val => BirthDays = val, nameof(BirthDays), month);
+            UpdateDays(() => DaysForBirthday, val => DaysForBirthday = val, nameof(DaysForBirthday), month);
         }
 
         private void UpdateNameDays(int month)
         {
-            UpdateDays(() => NameDays, val => NameDays = val, nameof(NameDays), month);
+            UpdateDays(() => DaysForNameday, val => DaysForNameday = val, nameof(DaysForNameday), month);
         }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
-
-    public class MonthOption
-    {
-        public int Number { get; set; }      // 1–12
-        public required string Name { get; set; }     // "Január", "Február" stb.
     }
 }
